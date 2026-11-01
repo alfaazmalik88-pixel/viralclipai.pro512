@@ -1,0 +1,33 @@
+# Global Robots.txt for ViralClip AI
+User-agent: *
+Allow: /
+
+# Explicit rules for major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Disallow private/internal paths from indexing
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /outputs/
+
+# XML Sitemap Location
+Sitemap: https://viralclipai.pro/sitemap.xml
