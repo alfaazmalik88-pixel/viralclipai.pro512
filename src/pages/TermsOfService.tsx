@@ -1,18 +1,22 @@
 import React, { useEffect } from 'react';
 import { FileText, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const TermsOfService = () => {
+  const location = useLocation();
+  const meta = getRouteMetadata('/terms');
+
   useEffect(() => {
     updatePageSeo({
-      title: 'Terms of Service | ViralClip AI – User Agreement & Rules',
-      description: 'Review the ViralClip AI Terms of Service, acceptable use guidelines, fair credit usage, and software agreement for video creators.',
-      canonicalPath: '/terms-of-service',
+      title: meta.title,
+      description: meta.description,
+      canonicalPath: '/terms',
       ogType: 'website'
     });
-  }, []);
+  }, [meta]);
   return (
     <div className="min-h-[100dvh] bg-black text-zinc-100 p-6 md:p-12 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -21,7 +25,7 @@ export const TermsOfService = () => {
         </Link>
         <div className="flex items-center gap-3 border-b border-zinc-800 pb-6">
           <FileText className="w-8 h-8 text-indigo-400" />
-          <h1 className="text-3xl font-bold">Terms of Service</h1>
+          <h1 className="text-3xl font-bold">{meta.headline || 'Terms of Service'}</h1>
         </div>
         <div className="space-y-6 text-zinc-300 leading-relaxed">
           <p>

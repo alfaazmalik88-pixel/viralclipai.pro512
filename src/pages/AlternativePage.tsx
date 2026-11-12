@@ -23,6 +23,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BLOG_ARTICLES, BlogArticle } from '../data/blogData';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export type AlternativeToolKey = 'opus' | 'submagic' | 'klap' | 'vizard';
 
@@ -232,9 +233,10 @@ export const AlternativePage: React.FC<AlternativePageProps> = ({ tool }) => {
 
   // SEO: Update page title, meta description, and JSON-LD structured data with strict deduplication
   useEffect(() => {
+    const routeMeta = getRouteMetadata(`/${config.slug}`);
     updatePageSeo({
-      title: config.seoTitle,
-      description: config.metaDescription,
+      title: routeMeta.title || config.seoTitle,
+      description: routeMeta.description || config.metaDescription,
       canonicalPath: `/${config.slug}`,
       ogType: 'website',
       keywords: [
@@ -246,8 +248,9 @@ export const AlternativePage: React.FC<AlternativePageProps> = ({ tool }) => {
       ]
     });
 
-    // Structured Data (JSON-LD)
+    // Structured Data (JSON-LD) — purge any existing server-injected ld+json to prevent duplicate schema tags
     const schemaId = `schema-${config.slug}`;
+    document.head.querySelectorAll(`script[type="application/ld+json"]:not(#${schemaId})`).forEach(el => el.remove());
     let schemaScript = document.getElementById(schemaId) as HTMLScriptElement | null;
     if (!schemaScript) {
       schemaScript = document.createElement('script');
@@ -304,8 +307,8 @@ export const AlternativePage: React.FC<AlternativePageProps> = ({ tool }) => {
   const otherTools: { key: string; name: string; path: string }[] = [
     { key: 'capcut', name: 'CapCut Alternative (No VPN)', path: '/capcut-alternative' },
     { key: 'opus', name: 'Opus Clip Alternative', path: '/opus-clip-alternative' },
-    { key: 'descript', name: 'Descript Alternative', path: '/descript-alternative' },
-    { key: 'invideo', name: 'InVideo AI Alternative', path: '/invideo-ai-alternative' },
+    { key: 'descript', name: 'Descript Alternative', path: '/descript-alternative-browser-podcast-to-shorts-clipper' },
+    { key: 'invideo', name: 'InVideo AI Alternative', path: '/invideo-ai-alternative-podcast-to-viral-shorts-clipper' },
     { key: 'submagic', name: 'Submagic Alternative', path: '/submagic-alternative' },
     { key: 'klap', name: 'Klap Alternative', path: '/klap-alternative' },
     { key: 'vizard', name: 'Vizard AI Alternative', path: '/vizard-alternative' }

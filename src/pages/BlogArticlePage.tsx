@@ -20,45 +20,65 @@ import {
   ShieldCheck,
   Video
 } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { BLOG_ARTICLES, BlogArticle } from '../data/blogData';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 interface BlogArticlePageProps {
   slug?: string;
 }
 
+const SLUG_TO_ARTICLE_ID_MAP: Record<string, string> = {
+  'opus-clip-alternative-convert-long-videos-to-shorts': 'how-to-convert-long-videos-to-shorts',
+  'capcut-alternative-online-auto-captions-no-vpn': 'capcut-alternative',
+  'choppity-alternative': 'choppity-alternative',
+  'veed-io-alternative': 'veed-io-alternative',
+  'premiere-pro-shorts-alternative': 'premiere-pro-shorts-alternative',
+  'autocap-alternative': 'autocap-alternative',
+  'simplified-video-alternative': 'simplified-video-alternative',
+  'clipchamp-auto-caption-alternative': 'clipchamp-auto-caption-alternative',
+  'descript-alternative': 'descript-alternative',
+  'invideo-alternative': 'invideo-ai-alternative',
+  'invideo-ai-alternative': 'invideo-ai-alternative',
+  'opus-clip-free-alternative-no-watermark-review': 'opus-clip-alternative',
+  'opus-clip-free-alternative': 'opus-clip-alternative',
+  'opus-clip-vs-viralclip': 'opus-clip-alternative'
+};
+
 export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({ slug: propSlug }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams<{ slug: string }>();
   const activeSlug = propSlug || params.slug || '';
+  const routeMeta = getRouteMetadata(location.pathname);
 
   const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // Find article by slug or id (with backward-compatible alias)
+  // Find article by slug, id, or mapped variant ID
+  const mappedId = SLUG_TO_ARTICLE_ID_MAP[activeSlug];
   const article: BlogArticle | undefined = BLOG_ARTICLES.find(
     (a) =>
       a.slug === activeSlug ||
       a.id === activeSlug ||
-      (activeSlug === 'opus-clip-alternative-convert-long-videos-to-shorts' &&
-        a.id === 'how-to-convert-long-videos-to-shorts')
+      (mappedId && (a.id === mappedId || a.slug === mappedId))
   );
-
 
   // Scroll to top on load or article change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeSlug]);
 
-  // SEO: Update page title, meta description, canonical, and OpenGraph/Twitter with deduplication
+  // SEO: Update page title, meta description, canonical, and OpenGraph/Twitter with canonical path
   useEffect(() => {
     if (!article) return;
 
-    const pageTitle = `${article.title} | ViralClip AI`;
-    const pageDesc = article.description || article.summary;
-    const pageKeywords = article.keywords || [
+    const canonicalSlugPath = `/${article.slug}`;
+    const pageTitle = routeMeta.title || `${article.title} | ViralClip AI`;
+    const pageDesc = routeMeta.description || article.description || article.summary || '';
+    const pageKeywords = routeMeta.keywords || article.keywords || [
       article.title,
       article.category,
       'ai shorts generator',
@@ -69,13 +89,14 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({ slug: propSlug
     updatePageSeo({
       title: pageTitle,
       description: pageDesc,
-      canonicalPath: `/${article.slug}`,
+      canonicalPath: canonicalSlugPath,
       ogType: 'article',
       keywords: pageKeywords
     });
 
-    // JSON-LD Structured Data (Article + HowTo + FAQPage)
+    // JSON-LD Structured Data (Article + HowTo + FAQPage) — purge any existing server-injected ld+json to prevent duplicate schema tags
     const scriptId = 'article-jsonld-schema';
+    document.head.querySelectorAll(`script[type="application/ld+json"]:not(#${scriptId})`).forEach(el => el.remove());
     let script = document.getElementById(scriptId) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement('script');
@@ -283,12 +304,12 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({ slug: propSlug
 
             {/* Title */}
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-[1.15]">
-              {article.title}
+              {routeMeta.headline || article.title}
             </h1>
 
             {/* Summary / Subtitle */}
             <p className="text-base sm:text-lg text-zinc-400 leading-relaxed font-medium">
-              {article.summary}
+              {routeMeta.description || article.summary}
             </p>
           </header>
 
@@ -654,7 +675,7 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({ slug: propSlug
               {relatedArticles.map((rel) => (
                 <Link
                   key={rel.id}
-                  to={`/blog/${rel.slug}`}
+                  to={`/${rel.slug}`}
                   className="bg-zinc-950/80 border border-zinc-800/80 hover:border-indigo-500/50 rounded-2xl p-4 flex flex-col justify-between space-y-3 transition-all hover:-translate-y-0.5 group"
                 >
                   <div className="space-y-2">

@@ -12,21 +12,25 @@ import {
   Video, 
   Globe2 
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const AboutUs: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const meta = getRouteMetadata('/about');
 
   useEffect(() => {
     updatePageSeo({
-      title: 'About Us | ViralClip AI – The Video Repurposing Revolution',
-      description: 'Learn how ViralClip AI empowers creators to transform long podcasts and YouTube videos into viral short-form clips in seconds with no subscriptions.',
+      title: meta.title,
+      description: meta.description,
       canonicalPath: '/about',
-      ogType: 'website'
+      ogType: 'website',
+      keywords: meta.keywords
     });
-  }, []);
+  }, [meta]);
 
   const handleCtaClick = () => {
     navigate('/');
@@ -69,11 +73,11 @@ export const AboutUs: React.FC = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-          Empowering Creators with <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-amber-300 bg-clip-text text-transparent">Next-Gen Video AI</span>
+          {meta.headline || 'Empowering Creators with Next-Gen Video AI'}
         </h1>
 
         <p className="text-sm sm:text-base text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-          We are on a mission to democratize short-form video creation. ViralClip AI turns hours of long podcasts and YouTube videos into high-retention vertical shorts in seconds.
+          {meta.description}
         </p>
       </section>
 

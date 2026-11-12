@@ -3,16 +3,18 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const Contact = () => {
+  const meta = getRouteMetadata('/contact');
   useEffect(() => {
     updatePageSeo({
-      title: 'Contact Us | ViralClip AI – Support, Inquiries & Help',
-      description: 'Need help with your videos, export issues, or custom enterprise clipping plans? Reach out to our dedicated support team 24/7.',
+      title: meta.title,
+      description: meta.description,
       canonicalPath: '/contact',
       ogType: 'website'
     });
-  }, []);
+  }, [meta]);
   return (
     <div className="min-h-[100dvh] bg-black text-zinc-100 p-6 md:p-12 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">

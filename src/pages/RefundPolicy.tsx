@@ -1,18 +1,22 @@
 import React, { useEffect } from 'react';
 import { RotateCcw, ArrowLeft, AlertCircle, CheckCircle2, Mail } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const RefundPolicy = () => {
+  const location = useLocation();
+  const meta = getRouteMetadata('/refund-policy');
+
   useEffect(() => {
     updatePageSeo({
-      title: 'Cancellation & Refund Policy | ViralClip AI – Fair Guarantee',
-      description: 'Review our transparent refund and cancellation policy. We guarantee fair service and credit adjustments for any failed video processing.',
+      title: meta.title,
+      description: meta.description,
       canonicalPath: '/refund-policy',
       ogType: 'website'
     });
-  }, []);
+  }, [meta]);
   return (
     <div className="min-h-[100dvh] bg-black text-zinc-100 p-6 md:p-12 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -22,7 +26,7 @@ export const RefundPolicy = () => {
         <div className="flex items-center gap-3 border-b border-zinc-800 pb-6">
           <RotateCcw className="w-8 h-8 text-amber-400" />
           <div>
-            <h1 className="text-3xl font-bold">Cancellation & Refund Policy</h1>
+            <h1 className="text-3xl font-bold">{meta.headline || 'Cancellation & Refund Policy'}</h1>
             <p className="text-xs text-zinc-400 mt-1">Digital Processing & Service Terms</p>
           </div>
         </div>

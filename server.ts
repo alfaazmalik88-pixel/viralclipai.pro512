@@ -7,7 +7,7 @@ import fs from 'fs';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import Groq from 'groq-sdk';
-import { injectRouteSeo } from './src/serverSeoHelper';
+import { injectRouteSeo, getRouteMetadata, CANONICAL_ALIAS_MAP } from './src/serverSeoHelper';
 import { DEMO_PRELOADED_SUBTITLES } from './src/data/demoSubtitles';
 
 const app = express();
@@ -641,7 +641,6 @@ async function transcribeAudioWithGroq(
   }
 
   let tempInputFile: string | null = null;
-  let tempMp3: string | null = null;
 
   try {
     let sourcePath = '';
@@ -655,100 +654,131 @@ async function transcribeAudioWithGroq(
       return null;
     }
 
-    tempMp3 = path.join('/tmp', `groq_audio_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`);
-
-    // Convert audio to lightweight mono 16kHz MP3 for instant transfer
-    await new Promise<void>((resolve, reject) => {
-      const ssCmd = targetStartTime > 0 ? `-ss ${targetStartTime}` : '';
-      const tCmd = targetDuration > 0 ? `-t ${targetDuration}` : '';
-      exec(`ffmpeg -y ${ssCmd} -i "${sourcePath}" ${tCmd} -vn -ar 16000 -ac 1 -b:a 48k "${tempMp3}"`, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    if (!fs.existsSync(tempMp3)) {
-      return null;
+    // Determine actual duration for full up to 60 minutes (3600s) coverage
+    let actualDuration = targetDuration;
+    if (actualDuration <= 0) {
+      try {
+        const probeOut = await new Promise<string>((resolve) => {
+          exec(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${sourcePath}"`, (err, stdout) => {
+            resolve(stdout || '');
+          });
+        });
+        actualDuration = parseFloat(probeOut.trim()) || 60;
+      } catch (_) {
+        actualDuration = 60;
+      }
     }
+
+    // Cap at 3600 seconds (60 minutes maximum)
+    actualDuration = Math.min(3600, Math.max(1, actualDuration));
 
     const targetLang = (language || 'auto').toLowerCase();
     const whisperLang = targetLang === 'auto' ? undefined : (targetLang === 'hi' ? 'hi' : targetLang);
 
-    // Call Groq Whisper Large v3 Turbo or direct Translation
-    let transcription: any = null;
-    if (targetLang === 'en') {
-      try {
-        transcription = await groqClient.audio.translations.create({
-          file: fs.createReadStream(tempMp3),
-          model: 'whisper-large-v3',
-          response_format: 'verbose_json',
-          temperature: 0.0
-        });
-      } catch (err: any) {
-        console.warn('Groq audio translation notice:', err?.message?.substring(0, 80));
-      }
-    }
-
-    if (!transcription) {
-      const whisperModels = ['whisper-large-v3-turbo', 'whisper-large-v3'];
-      for (const wm of whisperModels) {
-        try {
-          transcription = await groqClient.audio.transcriptions.create({
-            file: fs.createReadStream(tempMp3),
-            model: wm,
-            response_format: 'verbose_json',
-            timestamp_granularities: ['word'],
-            language: whisperLang,
-            temperature: 0.0
-          });
-          if (transcription) break;
-        } catch (err: any) {
-          console.warn(`Groq Whisper ${wm} notice:`, err?.message?.substring(0, 80));
-        }
-      }
-    }
-
-    if (!transcription) return null;
-
-    const detectedLang = (transcription.language || targetLang || 'hi').toLowerCase();
-    const isHindi = detectedLang.includes('hindi') || detectedLang === 'hi' || targetLang === 'hi';
-
-    const baseOffset = targetStartTime > 0 ? targetStartTime : 0;
-
-    // Collect words with millisecond timings and baseOffset
+    // Audio chunking: process in 300s (5-minute) chunks to guarantee 0 timeouts and support full 60-minute videos
+    const CHUNK_SIZE = 300;
+    const numChunks = Math.ceil(actualDuration / CHUNK_SIZE);
     const rawWords: Array<{ word: string; start: number; end: number }> = [];
+    let detectedLang = targetLang || 'hi';
 
-    if (Array.isArray(transcription.words) && transcription.words.length > 0) {
-      for (const w of transcription.words) {
-        const text = String(w.word || '').trim();
-        if (text) {
-          rawWords.push({
-            word: text,
-            start: Number((baseOffset + (w.start ?? 0)).toFixed(2)),
-            end: Number((baseOffset + (w.end ?? (w.start + 0.3))).toFixed(2))
-          });
-        }
-      }
-    } else if (Array.isArray(transcription.segments) && transcription.segments.length > 0) {
-      for (const seg of transcription.segments) {
-        const segText = String(seg.text || '').trim();
-        const splitWords = segText.split(/\s+/).filter(Boolean);
-        const segStart = seg.start ?? 0;
-        const segEnd = seg.end ?? (segStart + 2.0);
-        const durPerWord = Math.max(0.2, (segEnd - segStart) / Math.max(1, splitWords.length));
-        splitWords.forEach((word, wIdx) => {
-          rawWords.push({
-            word,
-            start: Number((baseOffset + segStart + wIdx * durPerWord).toFixed(2)),
-            end: Number((baseOffset + segStart + (wIdx + 1) * durPerWord).toFixed(2))
+    for (let c = 0; c < numChunks; c++) {
+      const chunkOffset = targetStartTime + c * CHUNK_SIZE;
+      const chunkDur = Math.min(CHUNK_SIZE, actualDuration - c * CHUNK_SIZE);
+      const chunkMp3 = path.join('/tmp', `groq_chunk_${Date.now()}_${c}_${Math.random().toString(36).substring(7)}.mp3`);
+
+      try {
+        // Extract ultra-lightweight mono 16kHz 32kbps MP3 (under 1.2 MB per 5 min)
+        await new Promise<void>((resolve, reject) => {
+          exec(`ffmpeg -y -ss ${chunkOffset} -i "${sourcePath}" -t ${chunkDur} -vn -ar 16000 -ac 1 -b:a 32k "${chunkMp3}"`, (err) => {
+            if (err) reject(err);
+            else resolve();
           });
         });
+
+        if (!fs.existsSync(chunkMp3) || fs.statSync(chunkMp3).size === 0) {
+          continue;
+        }
+
+        let transcription: any = null;
+        if (targetLang === 'en') {
+          try {
+            transcription = await groqClient.audio.translations.create({
+              file: fs.createReadStream(chunkMp3),
+              model: 'whisper-large-v3',
+              response_format: 'verbose_json',
+              temperature: 0.0
+            });
+          } catch (err: any) {
+            console.warn('Groq chunk audio translation notice:', err?.message?.substring(0, 80));
+          }
+        }
+
+        if (!transcription) {
+          const whisperModels = ['whisper-large-v3-turbo', 'whisper-large-v3'];
+          for (const wm of whisperModels) {
+            try {
+              transcription = await groqClient.audio.transcriptions.create({
+                file: fs.createReadStream(chunkMp3),
+                model: wm,
+                response_format: 'verbose_json',
+                timestamp_granularities: ['word'],
+                language: whisperLang,
+                temperature: 0.0
+              });
+              if (transcription) break;
+            } catch (err: any) {
+              console.warn(`Groq Whisper ${wm} chunk ${c} notice:`, err?.message?.substring(0, 80));
+            }
+          }
+        }
+
+        if (transcription) {
+          if (transcription.language) {
+            detectedLang = transcription.language.toLowerCase();
+          }
+
+          if (Array.isArray(transcription.words) && transcription.words.length > 0) {
+            for (const w of transcription.words) {
+              const text = String(w.word || '').trim();
+              if (text) {
+                rawWords.push({
+                  word: text,
+                  start: Number((chunkOffset + (w.start ?? 0)).toFixed(2)),
+                  end: Number((chunkOffset + (w.end ?? (w.start + 0.3))).toFixed(2))
+                });
+              }
+            }
+          } else if (Array.isArray(transcription.segments) && transcription.segments.length > 0) {
+            for (const seg of transcription.segments) {
+              const segText = String(seg.text || '').trim();
+              const splitWords = segText.split(/\s+/).filter(Boolean);
+              const segStart = seg.start ?? 0;
+              const segEnd = seg.end ?? (segStart + 2.0);
+              const durPerWord = Math.max(0.2, (segEnd - segStart) / Math.max(1, splitWords.length));
+              splitWords.forEach((word, wIdx) => {
+                rawWords.push({
+                  word,
+                  start: Number((chunkOffset + segStart + wIdx * durPerWord).toFixed(2)),
+                  end: Number((chunkOffset + segStart + (wIdx + 1) * durPerWord).toFixed(2))
+                });
+              });
+            }
+          }
+        }
+      } catch (chunkErr: any) {
+        console.warn(`Error processing 5-minute chunk ${c} of ${numChunks}:`, chunkErr?.message);
+      } finally {
+        if (fs.existsSync(chunkMp3)) {
+          try { fs.unlinkSync(chunkMp3); } catch (_) {}
+        }
       }
     }
 
     if (rawWords.length === 0) {
       return null;
     }
+
+    const isHindi = detectedLang.includes('hindi') || detectedLang === 'hi' || targetLang === 'hi';
 
     // Process words according to target language
     const processedWords = rawWords.map(w => {
@@ -769,56 +799,31 @@ async function transcribeAudioWithGroq(
       };
     });
 
-    // Chunk words into natural viral shorts segments (4-6 words, avoiding orphan 1-2 words)
+    // Chunk words into punchy viral shorts segments (3-5 words)
     const cleanSubtitles: any[] = [];
-    if (Array.isArray(transcription.segments) && transcription.segments.length > 0) {
-      for (const seg of transcription.segments) {
-        const segStart = Number((baseOffset + (seg.start ?? 0)).toFixed(2));
-        const segEnd = Number((baseOffset + (seg.end ?? (seg.start + 2.0))).toFixed(2));
-        const segWords = processedWords.filter(w => w.start >= segStart - 0.1 && w.end <= segEnd + 0.1);
-        const text = segWords.length > 0 
-          ? segWords.map(w => w.word).join(' ') 
-          : processSubtitleLanguage(String(seg.text || '').trim(), targetLang);
-        
-        if (text) {
-          cleanSubtitles.push({
-            id: `sub-${cleanSubtitles.length + 1}`,
-            startTime: segStart,
-            endTime: segEnd,
-            start: segStart,
-            end: segEnd,
-            text,
-            words: segWords.length > 0 ? segWords : undefined
-          });
-        }
+    const minChunk = 3;
+    const maxChunk = 5;
+    for (let i = 0; i < processedWords.length; ) {
+      const remaining = processedWords.length - i;
+      let take = Math.min(4, remaining);
+      if (remaining <= maxChunk) {
+        take = remaining;
+      } else if (remaining - take < minChunk) {
+        take = remaining;
       }
-    }
-
-    if (cleanSubtitles.length === 0) {
-      const minChunk = 4;
-      const maxChunk = 6;
-      for (let i = 0; i < processedWords.length; ) {
-        const remaining = processedWords.length - i;
-        let take = Math.min(5, remaining);
-        if (remaining <= maxChunk) {
-          take = remaining;
-        } else if (remaining - take < 3) {
-          take = remaining;
-        }
-        const chunkWords = processedWords.slice(i, i + take);
-        const sStart = chunkWords[0].start;
-        const sEnd = chunkWords[chunkWords.length - 1].end;
-        cleanSubtitles.push({
-          id: `sub-${cleanSubtitles.length + 1}`,
-          startTime: sStart,
-          endTime: sEnd,
-          start: sStart,
-          end: sEnd,
-          text: chunkWords.map(w => w.word).join(' '),
-          words: chunkWords
-        });
-        i += take;
-      }
+      const chunkWords = processedWords.slice(i, i + take);
+      const sStart = chunkWords[0].start;
+      const sEnd = chunkWords[chunkWords.length - 1].end;
+      cleanSubtitles.push({
+        id: `sub-${cleanSubtitles.length + 1}`,
+        startTime: sStart,
+        endTime: sEnd,
+        start: sStart,
+        end: sEnd,
+        text: chunkWords.map(w => w.word).join(' '),
+        words: chunkWords
+      });
+      i += take;
     }
 
     return {
@@ -826,14 +831,11 @@ async function transcribeAudioWithGroq(
       detectedLanguage: isHindi ? 'hi' : detectedLang
     };
   } catch (err) {
-    console.warn('Groq transcription notice:', err);
+    console.warn('Groq transcription error:', err);
     return null;
   } finally {
     if (tempInputFile && fs.existsSync(tempInputFile)) {
       try { fs.unlinkSync(tempInputFile); } catch (_) {}
-    }
-    if (tempMp3 && fs.existsSync(tempMp3)) {
-      try { fs.unlinkSync(tempMp3); } catch (_) {}
     }
   }
 }
@@ -1311,9 +1313,10 @@ const runTrimJob = async (req: express.Request, res: express.Response, onComplet
       const fontName = 'DejaVu Sans';
       let titleBadgeStyle = `Style: TitleBadge,${fontName},32,&H00FFFFFF,&H00000000,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,3,1,2,20,20,40,1`;
 
-      let marginV = shouldBurnTitle ? 120 : 60;
+      // Vertical margin: strictly down in the niche (bottom) line, safely clear of face
+      let marginV = shouldBurnTitle ? 140 : 85;
       if (captionPosition === 'middle') marginV = 960;
-      else if (captionPosition === 'lower') marginV = 320;
+      else if (captionPosition === 'lower') marginV = 200;
       else if (captionPosition === 'top') marginV = 1650;
 
       const alignVal = captionAlign === 'left' ? 1 : 2;
@@ -1398,8 +1401,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
               const wEnd = toAssTime(activeWord.end);
 
               // "Jahan audio ho wahi show kare, aage ka nahi":
-              // Only include words spoken up to activeWord (max 4 recent words window), future words are strictly hidden
-              const visibleWords = words.slice(0, wIdx + 1).slice(-4);
+              // Strictly 1-2 words on screen so captions NEVER wrap or jump to an upper line!
+              const visibleWords = words.slice(0, wIdx + 1).slice(-2);
               const formattedChunk = visibleWords.map((w: any, idx: number) => {
                 if (idx === visibleWords.length - 1) {
                   return `{\\c${highlightColour}\\b1}${w.word}{\\c&H00FFFFFF&\\b1}`;
@@ -1410,10 +1413,23 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
               assContent += `Dialogue: 1,${wStart},${wEnd},CaptionStyle,,0,0,0,,${formattedChunk}\n`;
             }
           } else {
-            const start = toAssTime(segStart);
-            const end = toAssTime(segEnd);
-            const text = String(item.text || '').trim();
-            assContent += `Dialogue: 1,${start},${end},CaptionStyle,,0,0,0,,{\\c${highlightColour}\\b1}${text}\n`;
+            const rawText = String(item.text || '').trim();
+            const textWords = rawText.split(/\s+/).filter(Boolean);
+            if (textWords.length > 2) {
+              const totalD = Math.max(0.5, segEnd - segStart);
+              const step = totalD / textWords.length;
+              for (let i = 0; i < textWords.length; i += 2) {
+                const chunk = textWords.slice(i, i + 2);
+                const cStart = toAssTime(segStart + i * step);
+                const cEnd = toAssTime(Math.min(segEnd, segStart + (i + chunk.length) * step));
+                const chunkStr = chunk.map((w, idx) => idx === chunk.length - 1 ? `{\\c${highlightColour}\\b1}${w}` : `{\\c&H00FFFFFF&\\b1}${w}`).join(' ');
+                assContent += `Dialogue: 1,${cStart},${cEnd},CaptionStyle,,0,0,0,,${chunkStr}\n`;
+              }
+            } else {
+              const start = toAssTime(segStart);
+              const end = toAssTime(segEnd);
+              assContent += `Dialogue: 1,${start},${end},CaptionStyle,,0,0,0,,{\\c${highlightColour}\\b1}${rawText}\n`;
+            }
           }
         }
       }
@@ -1502,6 +1518,58 @@ async function startServer() {
     return res.status(404).send('Robots.txt not found');
   });
 
+  // URL Normalization & 301 Canonical Consolidation Middleware
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return next();
+    }
+
+    const rawPath = req.path;
+    // Skip API, Vite internals, and static assets
+    if (
+      rawPath.startsWith('/api') ||
+      rawPath.startsWith('/@') ||
+      rawPath.startsWith('/node_modules') ||
+      rawPath.startsWith('/src') ||
+      /\.(js|ts|tsx|jsx|css|json|svg|png|jpg|jpeg|gif|webp|mp4|webm|ico|woff|woff2|ttf|map|xml|txt)$/i.test(rawPath)
+    ) {
+      return next();
+    }
+
+    let targetPath = rawPath;
+
+    // 1. Remove trailing slash (except root '/')
+    if (targetPath.length > 1 && targetPath.endsWith('/')) {
+      targetPath = targetPath.replace(/\/+$/, '');
+    }
+
+    // 2. Normalize path to lowercase
+    if (targetPath !== targetPath.toLowerCase()) {
+      targetPath = targetPath.toLowerCase();
+    }
+
+    // 3. Handle /guides/:slug or /blog/:slug prefixes -> /:slug
+    const blogGuideMatch = targetPath.match(/^\/(?:guides|blog)\/([^/]+)$/);
+    if (blogGuideMatch) {
+      const slug = blogGuideMatch[1];
+      targetPath = `/${slug}`;
+    }
+
+    // 4. Consolidate all 18 duplicate/alias paths into the 27 canonical pages (301 Redirect)
+    if (CANONICAL_ALIAS_MAP[targetPath]) {
+      targetPath = CANONICAL_ALIAS_MAP[targetPath];
+    }
+
+    // If destination is different from incoming path, issue permanent 301 redirect
+    if (targetPath !== rawPath) {
+      const queryIndex = req.url.indexOf('?');
+      const queryString = queryIndex !== -1 ? req.url.slice(queryIndex) : '';
+      return res.redirect(301, `${targetPath}${queryString}`);
+    }
+
+    next();
+  });
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -1511,8 +1579,8 @@ async function startServer() {
 
     // Dynamic Server-Side HTML Rendering & Route SEO Injection (Dev Mode)
     app.use(async (req, res, next) => {
-      // Only handle GET requests for web pages
-      if (req.method !== 'GET') {
+      // Handle GET and HEAD requests for web pages
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
         return next();
       }
 
@@ -1532,7 +1600,11 @@ async function startServer() {
         const rawTemplate = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
         const transformedHtml = await vite.transformIndexHtml(url, rawTemplate);
         const finalHtml = injectRouteSeo(transformedHtml, url);
-        return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(finalHtml);
+        const meta = getRouteMetadata(url);
+        return res.status(200).set({
+          'Content-Type': 'text/html; charset=utf-8',
+          'Link': `<${meta.canonical}>; rel="canonical"`
+        }).end(finalHtml);
       } catch (e: any) {
         vite.ssrFixStacktrace(e);
         next(e);
@@ -1544,7 +1616,7 @@ async function startServer() {
 
     // Dynamic Server-Side HTML Rendering & Route SEO Injection (Production Mode)
     app.use((req, res, next) => {
-      if (req.method !== 'GET') {
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
         return next();
       }
       const url = req.originalUrl;
@@ -1556,7 +1628,11 @@ async function startServer() {
         if (fs.existsSync(indexPath)) {
           const rawHtml = fs.readFileSync(indexPath, 'utf-8');
           const finalHtml = injectRouteSeo(rawHtml, url);
-          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(finalHtml);
+          const meta = getRouteMetadata(url);
+          return res.status(200).set({
+            'Content-Type': 'text/html; charset=utf-8',
+            'Link': `<${meta.canonical}>; rel="canonical"`
+          }).end(finalHtml);
         }
       } catch (err) {
         console.error('Error injecting route SEO:', err);
@@ -1565,9 +1641,11 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
+  server.timeout = 1800000; // 30 minutes for large 60-minute video exports & transcriptions
+  server.keepAliveTimeout = 65000;
 }
 
 startServer();

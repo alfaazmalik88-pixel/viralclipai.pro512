@@ -3,16 +3,18 @@ import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CallToActionBanner } from '../components/CallToActionBanner';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const PrivacyPolicy = () => {
+  const meta = getRouteMetadata('/privacy-policy');
   useEffect(() => {
     updatePageSeo({
-      title: 'Privacy Policy | ViralClip AI – Video Privacy & Security',
-      description: 'Read our Privacy Policy. ViralClip AI respects your privacy: secure processing, no unauthorized data sharing, and zero file retention.',
+      title: meta.title,
+      description: meta.description,
       canonicalPath: '/privacy-policy',
       ogType: 'website'
     });
-  }, []);
+  }, [meta]);
   return (
     <div className="min-h-[100dvh] bg-black text-zinc-100 p-6 md:p-12 overflow-y-auto">
       <div className="max-w-3xl mx-auto space-y-8">

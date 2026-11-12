@@ -11,7 +11,7 @@ import { PricingModal } from './components/PricingModal';
 import { AuthModal } from './components/AuthModal';
 import { VideoState, Clip, EditorSettings, RenderJob } from './types';
 import { renderVideoClip } from './lib/renderVideo';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { TermsOfService } from './pages/TermsOfService';
 import { Contact } from './pages/Contact';
@@ -26,15 +26,16 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
 import { DEMO_PRELOADED_SUBTITLES } from './data/demoSubtitles';
 import { translateSubtitlesInstant } from './utils/instantTranslation';
-import { resetDefaultSeo } from './utils/seo';
+import { resetDefaultSeo, updatePageSeo } from './utils/seo';
+import { getRouteMetadata, CANONICAL_ALIAS_MAP } from './serverSeoHelper';
 
 export default function App() {
   const location = useLocation();
   const { user, useMinutes } = useAuth();
 
-  // Reset default SEO when on homepage or features
+  // Reset default SEO when returning to homepage ('/')
   useEffect(() => {
-    if (location.pathname === '/' || location.pathname === '/features') {
+    if (location.pathname === '/') {
       resetDefaultSeo();
     }
   }, [location.pathname]);
@@ -882,71 +883,75 @@ export default function App() {
     </div>
   );
 
+function BlogSlugRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  if (!slug) return <Navigate to="/blog" replace />;
+  const rawTarget = `/${slug.toLowerCase()}`;
+  const canonicalTarget = CANONICAL_ALIAS_MAP[rawTarget] || rawTarget;
+  return <Navigate to={canonicalTarget} replace />;
+}
+
   return (
     <Routes>
+      {/* 1. Core Platform & Policy Pages (8 Unique Canonical Pages) */}
       <Route path="/" element={mainWorkspace} />
-      <Route path="/features" element={mainWorkspace} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-of-service" element={<TermsOfService />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/refund-policy" element={<RefundPolicy />} />
-      <Route path="/cancellation-refund" element={<RefundPolicy />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/blog" element={<BlogPage />} />
-      <Route path="/guides" element={<BlogPage />} />
-      <Route path="/blog/:slug" element={<BlogArticlePage />} />
-      <Route path="/guides/:slug" element={<BlogArticlePage />} />
-      
-      {/* Individual dedicated pages for all remaining blog articles */}
+      <Route path="/about" element={<AboutUs />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/refund-policy" element={<RefundPolicy />} />
+
+      {/* 2. Viral Growth & Caption Strategy Guides (5 Unique Canonical Pages) */}
+      <Route path="/how-to-convert-long-youtube-videos-into-viral-shorts" element={<BlogArticlePage slug="how-to-convert-long-youtube-videos-into-viral-shorts" />} />
       <Route path="/how-to-add-alex-hormozi-captions-in-60-seconds" element={<BlogArticlePage slug="how-to-add-alex-hormozi-captions-in-60-seconds" />} />
       <Route path="/viral-hooks-formula-retain-85-percent-watch-time" element={<BlogArticlePage slug="viral-hooks-formula-retain-85-percent-watch-time" />} />
       <Route path="/shorts-seo-secrets-rank-number-1-youtube-explore" element={<BlogArticlePage slug="shorts-seo-secrets-rank-number-1-youtube-explore" />} />
       <Route path="/kinetic-subtitles-dynamic-word-highlighting-secret" element={<BlogArticlePage slug="kinetic-subtitles-dynamic-word-highlighting-secret" />} />
-      <Route path="/how-to-convert-long-youtube-videos-into-viral-shorts" element={<BlogArticlePage slug="how-to-convert-long-youtube-videos-into-viral-shorts" />} />
-      <Route path="/opus-clip-alternative-convert-long-videos-to-shorts" element={<BlogArticlePage slug="how-to-convert-long-youtube-videos-into-viral-shorts" />} />
 
-      {/* Alternative Pages */}
-      <Route path="/capcut-alternative-online-auto-captions-no-vpn" element={<BlogArticlePage slug="capcut-alternative-online-auto-captions-no-vpn" />} />
-      <Route path="/capcut-alternative" element={<BlogArticlePage slug="capcut-alternative-online-auto-captions-no-vpn" />} />
-
-      <Route path="/choppity-alternative-cheaper-fast-viral-clips" element={<BlogArticlePage slug="choppity-alternative-cheaper-fast-viral-clips" />} />
-      <Route path="/choppity-alternative" element={<BlogArticlePage slug="choppity-alternative-cheaper-fast-viral-clips" />} />
-
-      <Route path="/veed-io-alternative-free-auto-subtitles-no-watermark" element={<BlogArticlePage slug="veed-io-alternative-free-auto-subtitles-no-watermark" />} />
-      <Route path="/veed-io-alternative" element={<BlogArticlePage slug="veed-io-alternative-free-auto-subtitles-no-watermark" />} />
-
-      <Route path="/premiere-pro-alternative-fast-social-shorts" element={<BlogArticlePage slug="premiere-pro-alternative-fast-social-shorts" />} />
-      <Route path="/premiere-pro-shorts-alternative" element={<BlogArticlePage slug="premiere-pro-alternative-fast-social-shorts" />} />
-
-      <Route path="/autocap-alternative-dynamic-captions-online" element={<BlogArticlePage slug="autocap-alternative-dynamic-captions-online" />} />
-      <Route path="/autocap-alternative" element={<BlogArticlePage slug="autocap-alternative-dynamic-captions-online" />} />
-
-      <Route path="/simplified-video-clipper-alternative" element={<BlogArticlePage slug="simplified-video-clipper-alternative" />} />
-      <Route path="/simplified-video-alternative" element={<BlogArticlePage slug="simplified-video-clipper-alternative" />} />
-
-      <Route path="/clipchamp-alternative-viral-short-form-video" element={<BlogArticlePage slug="clipchamp-alternative-viral-short-form-video" />} />
-      <Route path="/clipchamp-auto-caption-alternative" element={<BlogArticlePage slug="clipchamp-alternative-viral-short-form-video" />} />
-
-      <Route path="/descript-alternative-browser-podcast-to-shorts-clipper" element={<BlogArticlePage slug="descript-alternative-browser-podcast-to-shorts-clipper" />} />
-      <Route path="/descript-alternative" element={<BlogArticlePage slug="descript-alternative-browser-podcast-to-shorts-clipper" />} />
-
-      <Route path="/invideo-ai-alternative-podcast-to-viral-shorts-clipper" element={<BlogArticlePage slug="invideo-ai-alternative-podcast-to-viral-shorts-clipper" />} />
-      <Route path="/invideo-ai-alternative" element={<BlogArticlePage slug="invideo-ai-alternative-podcast-to-viral-shorts-clipper" />} />
-      <Route path="/invideo-alternative" element={<BlogArticlePage slug="invideo-ai-alternative-podcast-to-viral-shorts-clipper" />} />
-
-      <Route path="/opus-clip-free-alternative-no-watermark-review" element={<BlogArticlePage slug="opus-clip-free-alternative-no-watermark-review" />} />
-      <Route path="/opus-clip-free-alternative" element={<BlogArticlePage slug="opus-clip-free-alternative-no-watermark-review" />} />
-      <Route path="/opus-clip-vs-viralclip" element={<BlogArticlePage slug="opus-clip-free-alternative-no-watermark-review" />} />
-
-
-
-      <Route path="/about" element={<AboutUs />} />
-      <Route path="/about-us" element={<AboutUs />} />
+      {/* 3. Competitor Alternatives & Comparisons (13 Unique Canonical Pages — 1 Per Tool) */}
       <Route path="/opus-clip-alternative" element={<AlternativePage tool="opus" />} />
       <Route path="/submagic-alternative" element={<AlternativePage tool="submagic" />} />
       <Route path="/klap-alternative" element={<AlternativePage tool="klap" />} />
       <Route path="/vizard-alternative" element={<AlternativePage tool="vizard" />} />
+      <Route path="/capcut-alternative" element={<BlogArticlePage slug="capcut-alternative" />} />
+      <Route path="/choppity-alternative-cheaper-fast-viral-clips" element={<BlogArticlePage slug="choppity-alternative-cheaper-fast-viral-clips" />} />
+      <Route path="/veed-io-alternative-free-auto-subtitles-no-watermark" element={<BlogArticlePage slug="veed-io-alternative-free-auto-subtitles-no-watermark" />} />
+      <Route path="/premiere-pro-alternative-fast-social-shorts" element={<BlogArticlePage slug="premiere-pro-alternative-fast-social-shorts" />} />
+      <Route path="/autocap-alternative-dynamic-captions-online" element={<BlogArticlePage slug="autocap-alternative-dynamic-captions-online" />} />
+      <Route path="/simplified-video-clipper-alternative" element={<BlogArticlePage slug="simplified-video-clipper-alternative" />} />
+      <Route path="/clipchamp-alternative-viral-short-form-video" element={<BlogArticlePage slug="clipchamp-alternative-viral-short-form-video" />} />
+      <Route path="/descript-alternative-browser-podcast-to-shorts-clipper" element={<BlogArticlePage slug="descript-alternative-browser-podcast-to-shorts-clipper" />} />
+      <Route path="/invideo-ai-alternative-podcast-to-viral-shorts-clipper" element={<BlogArticlePage slug="invideo-ai-alternative-podcast-to-viral-shorts-clipper" />} />
+
+      {/* 4. Consolidate All 19 Duplicate/Alias URLs into the 26 Canonical Pages */}
+      <Route path="/features" element={<Navigate to="/" replace />} />
+      <Route path="/about-us" element={<Navigate to="/about" replace />} />
+      <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
+      <Route path="/cancellation-refund" element={<Navigate to="/refund-policy" replace />} />
+      <Route path="/guides" element={<Navigate to="/blog" replace />} />
+      <Route path="/opus-clip-free-alternative-no-watermark-review" element={<Navigate to="/opus-clip-alternative" replace />} />
+      <Route path="/opus-clip-free-alternative" element={<Navigate to="/opus-clip-alternative" replace />} />
+      <Route path="/opus-clip-vs-viralclip" element={<Navigate to="/opus-clip-alternative" replace />} />
+      <Route path="/opus-clip-alternative-convert-long-videos-to-shorts" element={<Navigate to="/how-to-convert-long-youtube-videos-into-viral-shorts" replace />} />
+      <Route path="/capcut-alternative-online-auto-captions-no-vpn" element={<Navigate to="/capcut-alternative" replace />} />
+      <Route path="/choppity-alternative" element={<Navigate to="/choppity-alternative-cheaper-fast-viral-clips" replace />} />
+      <Route path="/veed-io-alternative" element={<Navigate to="/veed-io-alternative-free-auto-subtitles-no-watermark" replace />} />
+      <Route path="/premiere-pro-shorts-alternative" element={<Navigate to="/premiere-pro-alternative-fast-social-shorts" replace />} />
+      <Route path="/autocap-alternative" element={<Navigate to="/autocap-alternative-dynamic-captions-online" replace />} />
+      <Route path="/simplified-video-alternative" element={<Navigate to="/simplified-video-clipper-alternative" replace />} />
+      <Route path="/clipchamp-auto-caption-alternative" element={<Navigate to="/clipchamp-alternative-viral-short-form-video" replace />} />
+      <Route path="/descript-alternative" element={<Navigate to="/descript-alternative-browser-podcast-to-shorts-clipper" replace />} />
+      <Route path="/invideo-alternative" element={<Navigate to="/invideo-ai-alternative-podcast-to-viral-shorts-clipper" replace />} />
+      <Route path="/invideo-ai-alternative" element={<Navigate to="/invideo-ai-alternative-podcast-to-viral-shorts-clipper" replace />} />
+
+      {/* 5. Dynamic /blog/:slug and /guides/:slug Redirect to Canonical /:slug */}
+      <Route path="/blog/:slug" element={<BlogSlugRedirect />} />
+      <Route path="/guides/:slug" element={<BlogSlugRedirect />} />
+
+      {/* 6. Catch-all: Redirect unknown URLs to homepage */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

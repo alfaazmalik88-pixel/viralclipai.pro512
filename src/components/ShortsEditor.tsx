@@ -395,6 +395,7 @@ export const ShortsEditor: React.FC<ShortsEditorProps> = ({
   // Audio-Synchronized Display Window:
   // "Jahan audio ho wahi show kare, aage ka nahi"
   // ONLY show words whose audio has already started! Future words are strictly hidden until audio reaches them.
+  // Strictly 1-2 words on screen so captions NEVER wrap or jump to an upper line!
   const displayWordsWindow = useMemo(() => {
     if (!activeSubtitle || !subtitleWords || subtitleWords.length === 0) return [];
 
@@ -402,21 +403,21 @@ export const ShortsEditor: React.FC<ShortsEditorProps> = ({
     const spoken = subtitleWords.filter(w => w.start <= syncPlaybackTime + 0.05);
     if (spoken.length === 0) return [];
 
-    // Keep compact 1-4 punchy words on screen for clean viral reel reading
-    return spoken.slice(Math.max(0, spoken.length - 4));
+    // Keep compact 1-2 punchy words so it stays strictly on one lower line without ever jumping to upper line
+    return spoken.slice(Math.max(0, spoken.length - 2));
   }, [activeSubtitle, subtitleWords, syncPlaybackTime]);
 
   // Caption Vertical Positioning:
-  // Placed down near the bottom (lower-third), clear of center face and just above the series tag badge
+  // Placed down strictly in the niche (bottom) line, safely clear of face and above the series tag badge
   const getCaptionPositionStyle = (): React.CSSProperties => {
     switch (settings.captionPosition) {
       case 'middle':
         return { top: '50%', transform: 'translateY(-50%)' };
       case 'lower':
-        return { bottom: '20%' };
+        return { bottom: settings.titleSticker ? '13%' : '9%' };
       case 'bottom':
       default:
-        return { bottom: settings.titleSticker ? '32px' : '14px' };
+        return { bottom: settings.titleSticker ? '7.5%' : '4.5%' };
     }
   };
 
@@ -678,7 +679,7 @@ export const ShortsEditor: React.FC<ShortsEditorProps> = ({
                 <div 
                   key={`box-${activeSubtitle.id || activeSubtitle.startTime || activeSubtitle.text}`}
                   dir={isRtl ? 'rtl' : 'ltr'}
-                  className={`inline-flex flex-wrap items-center ${isAlignLeft ? 'justify-start text-left' : 'justify-center text-center mx-auto'} gap-1.5 sm:gap-2.5 max-w-[90%] sm:max-w-[85%] bg-black/95 border border-white/20 px-3.5 sm:px-5 py-1.5 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-md select-none`}
+                  className={`inline-flex flex-nowrap whitespace-nowrap items-center ${isAlignLeft ? 'justify-start text-left' : 'justify-center text-center mx-auto'} gap-2 max-w-[95%] bg-black/95 border border-white/20 px-3.5 sm:px-5 py-1.5 rounded-xl sm:rounded-2xl shadow-2xl backdrop-blur-md select-none`}
                 >
                   {displayWordsWindow.map((w, idx) => {
                     const isActive = (syncPlaybackTime >= w.start && syncPlaybackTime <= w.end) || 
@@ -713,7 +714,7 @@ export const ShortsEditor: React.FC<ShortsEditorProps> = ({
                 <div 
                   key={`hormozi-${activeSubtitle.id || activeSubtitle.startTime || activeSubtitle.text}`}
                   dir={isRtl ? 'rtl' : 'ltr'}
-                  className={`flex flex-wrap items-center ${isAlignLeft ? 'justify-start text-left' : 'justify-center text-center mx-auto'} gap-1.5 sm:gap-2.5 max-w-[92%] sm:max-w-[88%] px-1 bg-transparent p-0 border-none shadow-none select-none`}
+                  className={`flex flex-nowrap whitespace-nowrap items-center ${isAlignLeft ? 'justify-start text-left' : 'justify-center text-center mx-auto'} gap-2 max-w-[95%] px-1 bg-transparent p-0 border-none shadow-none select-none`}
                   style={{ background: 'transparent', backgroundColor: 'transparent', boxShadow: 'none', border: 'none' }}
                 >
                   {displayWordsWindow.map((w, idx) => {

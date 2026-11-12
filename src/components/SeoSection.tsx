@@ -469,7 +469,7 @@ export const SeoSection: React.FC<SeoSectionProps> = ({ onLoadDemo }) => {
           
           {/* Card 4: Terms of Service */}
           <Link 
-            to="/terms-of-service" 
+            to="/terms" 
             className="bg-zinc-900/80 hover:bg-zinc-800/90 border border-cyan-500/40 hover:border-cyan-400/80 rounded-xl p-2.5 sm:p-3 flex flex-col items-center justify-center gap-1.5 transition-all shadow-sm group active:scale-95 text-center"
           >
             <div className="w-7 h-7 rounded-lg bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center text-cyan-300 group-hover:scale-105 transition-transform shrink-0">
@@ -518,7 +518,7 @@ export const SeoSection: React.FC<SeoSectionProps> = ({ onLoadDemo }) => {
             <Link to="/blog" className="text-zinc-400 hover:text-white transition-colors">Viral Guides</Link>
             <Link to="/pricing" className="text-zinc-400 hover:text-white transition-colors">Pricing (₹49 / $5)</Link>
             <Link to="/privacy-policy" className="text-zinc-400 hover:text-white transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="text-zinc-400 hover:text-white transition-colors">Terms</Link>
+            <Link to="/terms" className="text-zinc-400 hover:text-white transition-colors">Terms</Link>
             <Link to="/refund-policy" className="text-zinc-400 hover:text-white transition-colors">Refund Policy</Link>
             <Link to="/contact" className="text-zinc-400 hover:text-white transition-colors">Contact</Link>
           </div>

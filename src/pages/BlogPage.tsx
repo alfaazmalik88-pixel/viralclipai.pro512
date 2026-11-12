@@ -17,7 +17,7 @@ import {
   Play, 
   Video 
 } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { 
   BLOG_ARTICLES, 
   BLOG_CATEGORIES, 
@@ -26,20 +26,23 @@ import {
   CREATOR_FAQS 
 } from '../data/blogData';
 import { updatePageSeo } from '../utils/seo';
+import { getRouteMetadata } from '../serverSeoHelper';
 
 export const BlogPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const meta = getRouteMetadata('/blog');
   const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<BlogCategory>('All Guides');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeArticle, setActiveArticle] = useState<BlogArticle | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // SEO: Update page metadata with deduplication
+  // SEO: Update page metadata with canonical /blog path
   React.useEffect(() => {
     updatePageSeo({
-      title: 'Creator Video Repurposing Blog & AI Guides | ViralClip AI',
-      description: 'Master viral hooks, Alex Hormozi animated kinetic captions, and video clipping comparisons. Free tutorials to scale YouTube Shorts and Instagram Reels.',
+      title: meta.title,
+      description: meta.description,
       canonicalPath: '/blog',
       ogType: 'website',
       keywords: [
@@ -55,7 +58,7 @@ export const BlogPage: React.FC = () => {
         'video repurposing guides'
       ]
     });
-  }, []);
+  }, [meta]);
 
   // Auto-open article from query param if provided (e.g. ?article=opus-clip-alternative)
   React.useEffect(() => {
@@ -145,11 +148,11 @@ export const BlogPage: React.FC = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-          How to Go Viral with <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-amber-300 bg-clip-text text-transparent">AI Animated Captions</span>
+          {meta.headline || 'How to Go Viral with AI Animated Captions'}
         </h1>
 
         <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-          Master the exact hooks, word-level subtitle techniques, and SEO strategies top YouTubers use to generate millions of views and scale from ₹0 to viral.
+          {meta.description}
         </p>
 
         {/* Quick Search & Category Filters */}
@@ -197,159 +200,7 @@ export const BlogPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Dedicated 4 Alternatives Quick Links Showcase */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-8">
-        <div className="bg-gradient-to-b from-zinc-950 via-zinc-950/90 to-zinc-900/40 border border-zinc-800 rounded-3xl p-5 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-850 pb-5">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
-                <Crown className="w-4 h-4" />
-                <span>2026 Competitive Breakdowns</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
-                Top AI Video Repurposing Alternatives
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
-                Compare ViralClip AI side-by-side with industry competitors on pricing, watermarks, auto-debit policies, and render speed.
-              </p>
-            </div>
-            <span className="text-[11px] font-bold text-zinc-500 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl self-start sm:self-auto">
-              Popular AI Tool Comparisons
-            </span>
-          </div>
-
-          {/* Distinct Tool Alternative Cards with Separate Links */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {/* 1. CapCut Alternative */}
-            <Link
-              to="/capcut-alternative"
-              className="bg-zinc-900/70 hover:bg-zinc-900 border border-rose-500/30 hover:border-rose-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200 group hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-500/10 cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                    No VPN Needed
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-bold">4 min read</span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-rose-300 transition-colors leading-snug">
-                  CapCut Alternative
-                </h3>
-                <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                  Browser-based AI video clipper with auto-captions. Zero VPN needed, 100% watermark-free 1080p.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold text-rose-400 group-hover:text-rose-300">
-                <span>View CapCut Comparison</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 2. Opus Clip Alternative */}
-            <Link
-              to="/opus-clip-alternative"
-              className="bg-zinc-900/70 hover:bg-zinc-900 border border-indigo-500/30 hover:border-indigo-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200 group hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                    #1 Highest Volume
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-bold">5 min read</span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-indigo-300 transition-colors leading-snug">
-                  Opus Clip Alternative
-                </h3>
-                <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                  No Auto-Debit, Pay-As-You-Go ($5 / ₹49). Never lose unused credits every 30 days.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold text-indigo-400 group-hover:text-indigo-300">
-                <span>View Opus Comparison</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 3. Submagic Alternative */}
-            <Link
-              to="/submagic-alternative"
-              className="bg-zinc-900/70 hover:bg-zinc-900 border border-amber-500/30 hover:border-amber-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200 group hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    Reels & Captions
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-bold">4 min read</span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-amber-300 transition-colors leading-snug">
-                  Submagic Alternative
-                </h3>
-                <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                  Authentic Hormozi Captions & 1080p Export (Zero Watermark) without paying $20/month.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold text-amber-400 group-hover:text-amber-300">
-                <span>View Submagic Comparison</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 4. Klap Alternative */}
-            <Link
-              to="/klap-alternative"
-              className="bg-zinc-900/70 hover:bg-zinc-900 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200 group hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                    Most Affordable
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-bold">4 min read</span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-emerald-300 transition-colors leading-snug">
-                  Klap.app Alternative
-                </h3>
-                <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                  Cheapest for Shorts & Reels. Skip Klap's $29/mo starter fee and heavy free watermark logos.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold text-emerald-400 group-hover:text-emerald-300">
-                <span>View Klap Comparison</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-
-            {/* 5. Vizard AI Alternative */}
-            <Link
-              to="/vizard-alternative"
-              className="bg-zinc-900/70 hover:bg-zinc-900 border border-purple-500/30 hover:border-purple-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200 group hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 cursor-pointer"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wide bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                    1-Click Fast Render
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-bold">4 min read</span>
-                </div>
-                <h3 className="text-base font-extrabold text-white group-hover:text-purple-300 transition-colors leading-snug">
-                  Vizard AI Alternative
-                </h3>
-                <p className="text-xs text-zinc-400 line-clamp-3 leading-relaxed">
-                  Faster, Simpler with 1-Click Viral Moments Detection. Zero cluttered timeline bloat.
-                </p>
-              </div>
-              <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-bold text-purple-400 group-hover:text-purple-300">
-                <span>View Vizard Comparison</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Article Cards Grid */}
+      {/* Article Cards Grid (Each Guide & Tool Comparison Listed Once) */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {filteredArticles.length === 0 ? (
           <div className="bg-zinc-950 border border-zinc-900 rounded-2xl p-12 text-center space-y-3">
@@ -365,7 +216,7 @@ export const BlogPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredArticles.map((article) => {
-              const articleUrl = article.category === 'AI Tool Alternatives' ? `/${article.slug}` : `/blog/${article.slug}`;
+              const articleUrl = `/${article.slug}`;
               return (
                 <article
                   key={article.id}
@@ -560,7 +411,7 @@ export const BlogPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Link
-                  to={activeArticle.category === 'AI Tool Alternatives' ? `/${activeArticle.slug}` : `/blog/${activeArticle.slug}`}
+                  to={`/${activeArticle.slug}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
                 >
                   <span>Open Full Page</span>
@@ -609,7 +460,7 @@ export const BlogPage: React.FC = () => {
                       <span>{activeArticle.competitorComparison.competitorName} vs ViralClip AI</span>
                     </h3>
                     <Link
-                      to={activeArticle.category === 'AI Tool Alternatives' ? `/${activeArticle.slug}` : `/blog/${activeArticle.slug}`}
+                      to={`/${activeArticle.slug}`}
                       className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                     >
                       <span>Full Dedicated Page</span>

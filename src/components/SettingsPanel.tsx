@@ -338,14 +338,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 Caption Position (Vertical Alignment)
               </span>
               <span className="text-[10px] text-indigo-400 font-semibold">
-                {settings.captionPosition === 'middle' ? 'Center (50%)' : settings.captionPosition === 'lower' ? 'Mid-Low (68%)' : 'Bottom (80%)'}
+                {settings.captionPosition === 'middle' ? 'Center (50%)' : settings.captionPosition === 'lower' ? 'Mid-Low' : 'Bottom Line (Niche)'}
               </span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'bottom', label: 'Bottom', sub: '80% (Clear of Face)' },
-                { id: 'lower', label: 'Mid-Low', sub: '68%' },
-                { id: 'middle', label: 'Center', sub: '50%' }
+                { id: 'bottom', label: 'Bottom Line', sub: 'Niche Line (Clear)' },
+                { id: 'lower', label: 'Mid-Low', sub: 'Slightly higher' },
+                { id: 'middle', label: 'Center', sub: 'Center (50%)' }
               ].map(pos => {
                 const isSelected = (settings.captionPosition || 'bottom') === pos.id;
                 return (

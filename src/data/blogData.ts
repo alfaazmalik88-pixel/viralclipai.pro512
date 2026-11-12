@@ -354,6 +354,16 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     targetKeyword: 'Opus Clip Alternative',
     readTime: '5 min read',
     summary: 'Tired of Opus Clip charging $15–$29/month and expiring your unused minutes? ViralClip AI is the #1 pay-as-you-go alternative with zero auto-debit, lifetime credits, and 1080p clean exports.',
+    description: 'Looking for a free Opus Clip alternative without expiring monthly credits or forced subscriptions? Repurpose long podcasts into viral vertical clips with glowing word highlights and 0 watermark.',
+    keywords: [
+      'opus clip alternative',
+      'opus clip free alternative',
+      'opus clip alternative no watermark',
+      'opus clip cheaper alternative',
+      'free opus clip for youtube shorts',
+      'opus clip review and alternatives',
+      'ai video clipper like opus clip free'
+    ],
     date: 'Oct 2026',
     badgeColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
     gradient: 'from-indigo-600/20 via-purple-600/10 to-zinc-950',
@@ -386,9 +396,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         },
         {
           stepNumber: 2,
-          title: 'Upload Large Files Up to 5GB',
+          title: 'Upload Large Files Up to 60 Minutes (5GB)',
           description: 'Drop your full podcast, interview, or gameplay footage directly into ViralClip AI. The neural engine analyzes pacing, speech spikes, and story hooks in seconds.',
-          tip: 'Supports YouTube video links, MP4, MOV, and WebM up to 5GB.'
+          tip: 'Supports YouTube video links, MP4, MOV, and WebM up to 60 minutes.'
         },
         {
           stepNumber: 3,
@@ -419,7 +429,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
         },
         {
           question: 'Can I test ViralClip AI for free before paying?',
-          answer: 'Yes! Every new user receives 5 free processing minutes upon signup with zero credit card required.'
+          answer: 'Yes! Every new user receives 5 free processing minutes upon signup with zero credit card required and zero watermarks.'
         }
       ]
     }
@@ -1169,7 +1179,7 @@ Microsoft Clipchamp is a useful basic editor for trimming home videos or corpora
   },
   {
     id: 'capcut-alternative',
-    slug: 'capcut-alternative-online-auto-captions-no-vpn',
+    slug: 'capcut-alternative',
     title: 'CapCut Alternative: Browser AI Video Clipper & Auto Captions (No VPN Required)',
     category: 'AI Tool Alternatives',
     readTime: '4 min read',
@@ -1461,106 +1471,6 @@ InVideo AI has become popular for generating text-prompted faceless videos stitc
         {
           question: 'Does ViralClip AI require recurring monthly payments?',
           answer: 'No. ViralClip AI uses a flexible pay-as-you-go credit system starting at just ₹49 ($4.99). Credits never expire.'
-        }
-      ]
-    }
-  },
-  {
-    id: 'opus-clip-free-alternative',
-    slug: 'opus-clip-free-alternative-no-watermark-review',
-    title: 'Opus Clip Free Alternative: 1-Click AI Shorts Without Monthly Locks or Watermark',
-    category: 'AI Tool Alternatives',
-    readTime: '5 min read',
-    date: 'Oct 2026',
-    previewBadge: 'OPUS FREE ALTERNATIVE • 0 WATERMARK • LIFETIME CREDITS',
-    description: 'Looking for a free Opus Clip alternative without expiring monthly credits or forced subscriptions? Repurpose long podcasts into viral vertical clips with glowing word highlights.',
-    keywords: [
-      'opus clip free alternative',
-      'opus clip alternative no watermark',
-      'opus clip cheaper alternative',
-      'free opus clip for youtube shorts',
-      'opus clip review and alternatives',
-      'ai video clipper like opus clip free'
-    ],
-    content: `
-# Opus Clip Free Alternative: Why Solo Creators Are Switching in 2026
-
-Opus Clip became the standard AI tool for chopping podcasts into vertical video snippets. However, as the platform matured, **many creators started running into frustrating barriers**:
-
-1. **Expiring Credit Traps:** If you purchase a 150-minute tier and only publish 3 videos this month, your unused 100 minutes vanish on the next billing date. You cannot roll them over.
-2. **Forced Recurring Auto-Debit:** Plans renew automatically at $15 to $29 per month ($180–$350/year), which is expensive for part-time YouTubers and independent podcasters.
-3. **Heavy Cloud Queues:** Free trial users are often placed in long render queues waiting up to 10 minutes per export.
-
----
-
-## How ViralClip AI Fixes Every Opus Clip Limitation
-
-* **Credits Never Expire:** Buy minutes once from ₹49 ($4.99). They stay in your account forever until you actually use them.
-* **Zero Watermark on Free Trial:** Export full 1080p clips cleanly without our brand name stamped across your face.
-* **Instant Dynamic Hormozi Subtitles:** Kinetic word-level highlights with high phonetic transcription accuracy.
-* **Direct Browser Rendering:** Fast cloud GPU pipeline with zero queue delays.
-    `,
-    competitorComparison: {
-      competitorName: 'Opus Clip (Pro Tier)',
-      competitorPrice: '$15 - $29 / month (Auto-Debit)',
-      viralClipPrice: '₹49 / $4.99 (Lifetime Top-Up)',
-      keyPainPoint: 'Unused video minutes expire every 30 days, watermarks on free tier, and locked into expensive monthly subscriptions.',
-      viralClipSolution: '100% lifetime credit rollover, zero watermarks on all exports, and ultra-affordable pay-as-you-go micro-packs.',
-      featureComparison: [
-        { feature: 'Credit Expiration', competitor: 'Credits expire every 30 days', viralClip: 'Credits NEVER expire (Lifetime validity)' },
-        { feature: 'Billing Model', competitor: 'Forced monthly auto-renewing subscription', viralClip: '100% Pay-As-You-Go (No auto-debit)' },
-        { feature: 'Free Trial Watermark', competitor: 'Prominent watermark on test videos', viralClip: '100% clean video (Zero watermark)' },
-        { feature: 'Entry Pricing', competitor: '$15.00/mo minimum (~₹1,250)', viralClip: '₹49 / $4.99 micro-packs' },
-        { feature: 'Export Quality', competitor: '1080p locked on premium tiers', viralClip: 'Full HD 1080p included on all plans' },
-        { feature: 'Series Episodic Tags', competitor: 'Manual subtitle typing required', viralClip: 'Automatic Part 1, Part 2 tags' }
-      ]
-    },
-    fullGuide: {
-      intro: 'Finding an Opus Clip alternative that is genuinely free to test, doesn’t watermark your hard work, and doesn’t trap you in monthly recurring credit card billing is essential for creators. ViralClip AI was engineered from the ground up to provide studio-grade AI moment clipping, face-centering auto-reframe, and kinetic subtitles at a fraction of the cost.',
-      keyTakeaway: 'Never pay for unused video minutes that disappear every month. Use lifetime pay-as-you-go micro-credits and export clean 1080p shorts.',
-      steps: [
-        {
-          stepNumber: 1,
-          title: 'Drop Long Video or YouTube URL',
-          description: 'Upload your video up to 60 minutes or paste a public link. No credit card or software installation required.',
-          tip: 'Podcasts, interviews, webinars, and educational videos give the best clip retention.'
-        },
-        {
-          stepNumber: 2,
-          title: 'Auto-Extract Viral Highlight Moments',
-          description: 'The AI searches for high-energy vocal hooks, comedic punchlines, and key takeaways, slicing them into 30 to 60-second clips.',
-          tip: 'Widescreen 16:9 footage is automatically reframed into 9:16 vertical mode.'
-        },
-        {
-          stepNumber: 3,
-          title: 'Style Your Word-Level Captions',
-          description: 'Enable Hormozi kinetic word glow in neon yellow or cyan. Position captions in the safe zone to avoid feed overlays.',
-          tip: 'Supports English, Hindi, Hinglish, and multilingual audio with millisecond accuracy.'
-        },
-        {
-          stepNumber: 4,
-          title: 'Export in Crisp 1080p Full HD',
-          description: 'Download your video file directly to your phone or desktop with zero watermark branding.',
-          tip: 'Post consistently 1 to 2 times daily across YouTube Shorts, TikTok, and Instagram Reels.'
-        }
-      ],
-      proTips: [
-        'Use the built-in Part 1 and Part 2 tags to turn a single interview into a multi-episode viral series.',
-        'Top up with affordable micro-credits only when you publish, keeping your monthly expenses near zero.',
-        'Hook viewers within the first 3 seconds using the animated word-level highlighting feature.'
-      ],
-      faq: [
-        {
-          question: 'Is ViralClip AI really free to try like Opus Clip?',
-          answer: 'Yes! Every creator gets 5 free processing minutes upon signup with full access to 1080p exports and zero watermarks.'
-        },
-        {
-          question: 'Do my purchased minutes expire at the end of the month?',
-          answer: 'No! Unlike Opus Clip where unused minutes expire every 30 days, ViralClip AI credits have lifetime validity and never expire.'
-        },
-        {
-          question: 'Can I export clips without watermark logos?',
-          answer: 'Yes! All videos rendered on ViralClip AI—including trial minutes—are 100% clean and free of watermarks.'
         }
       ]
     }
